@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sorted: shop setup</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#0070E0}a:hover{color:#003087}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F5F7FA; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #001C64; display: flex; flex-direction: column; overflow: hidden; position: relative">
+<div style="display: flex; align-items: center; gap: 8px; padding: 56px 16px 8px 8px">
+<a href="Main.dc.html" aria-label="Back" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #001C64; border-radius: 12px"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></a>
+<div style="font-weight: 600; font-size: 16px; color: #001C64; flex-grow: 1">Step 1 of 2</div>
+</div>
+<div style="padding: 8px 24px 0; display: flex; flex-direction: column; gap: 24px">
+<h1 style="margin: 0; font-family: 'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-weight: 700; font-size: 32px; line-height: 1.1; letter-spacing: -0.8px">Tell us about your shop</h1>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="shopname" style="font-size: 14px; font-weight: 600; color: #001C64">Shop name</label>
+<input id="shopname" value="Ola's Bakehouse" style="height: 52px; border-radius: 14px; border: 1.5px solid #DCE2EA; background: #FFFFFF; padding: 0 16px; font: inherit; font-size: 16px; color: #001C64; box-sizing: border-box"/>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 14px; font-weight: 600; color: #001C64">What do you sell?</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px"><button type="button" aria-pressed="true" style="height: 40px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; border: 1.5px solid #001C64; background: #001C64; color: #FFFFFF">Cakes and bakes</button><button type="button" aria-pressed="false" style="height: 40px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; border: 1.5px solid #DCE2EA; background: #FFFFFF; color: #001C64">Beauty</button><button type="button" aria-pressed="false" style="height: 40px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; border: 1.5px solid #DCE2EA; background: #FFFFFF; color: #001C64">Clothing</button><button type="button" aria-pressed="false" style="height: 40px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; border: 1.5px solid #DCE2EA; background: #FFFFFF; color: #001C64">Hair</button><button type="button" aria-pressed="false" style="height: 40px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; border: 1.5px solid #DCE2EA; background: #FFFFFF; color: #001C64">Crafts</button><button type="button" aria-pressed="false" style="height: 40px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; border: 1.5px solid #DCE2EA; background: #FFFFFF; color: #001C64">Something else</button></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 14px; font-weight: 600; color: #001C64">Where do buyers message you?</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px"><button type="button" aria-pressed="true" style="height: 40px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; border: 1.5px solid #001C64; background: #001C64; color: #FFFFFF">Instagram</button><button type="button" aria-pressed="true" style="height: 40px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; border: 1.5px solid #001C64; background: #001C64; color: #FFFFFF">WhatsApp</button><button type="button" aria-pressed="false" style="height: 40px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; border: 1.5px solid #DCE2EA; background: #FFFFFF; color: #001C64">TikTok</button><button type="button" aria-pressed="false" style="height: 40px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; border: 1.5px solid #DCE2EA; background: #FFFFFF; color: #001C64">Facebook</button><button type="button" aria-pressed="false" style="height: 40px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; border: 1.5px solid #DCE2EA; background: #FFFFFF; color: #001C64">Text</button></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 14px; font-weight: 600; color: #001C64">How do buyers get their order?</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; background: #EBEEF3; border-radius: 14px">
+<button type="button" aria-pressed="true" style="height: 40px; border: none; border-radius: 10px; background: #FFFFFF; font: inherit; font-size: 14px; font-weight: 600; color: #001C64; box-shadow: 0 1px 3px rgba(0,28,100,.15)">Collection</button>
+<button type="button" aria-pressed="false" style="height: 40px; border: none; border-radius: 10px; background: transparent; font: inherit; font-size: 14px; font-weight: 600; color: #515A6B">Delivery</button>
+<button type="button" aria-pressed="false" style="height: 40px; border: none; border-radius: 10px; background: transparent; font: inherit; font-size: 14px; font-weight: 600; color: #515A6B">Both</button>
+</div>
+</div>
+</div>
+<div style="margin-top: auto; padding: 0 24px 40px"><a href="Connect.dc.html" style="display: flex; align-items: center; justify-content: center; gap: 8px; height: 54px; border-radius: 16px; background: #0070E0; color: #FFFFFF; font-weight: 600; font-size: 17px; text-decoration: none; box-sizing: border-box"><span>Continue</span></a></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
