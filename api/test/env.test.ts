@@ -47,4 +47,40 @@ describe('loadEnv', () => {
   it('always reports the sandbox PayPal environment', () => {
     expect(loadEnv(valid).PAYPAL_ENV).toBe('sandbox');
   });
+
+  it('lists every missing variable in one message, not just the first', () => {
+    const { PAYPAL_WEBHOOK_ID, OPENAI_VISION_MODEL, INTERNAL_TOKEN, ...rest } = valid;
+    try {
+      loadEnv(rest);
+      throw new Error('expected loadEnv to throw');
+    } catch (err) {
+      const msg = (err as Error).message;
+      expect(msg).toContain('PAYPAL_WEBHOOK_ID');
+      expect(msg).toContain('OPENAI_VISION_MODEL');
+      expect(msg).toContain('INTERNAL_TOKEN');
+    }
+  });
+
+  it('says a variable is missing rather than quoting a type error', () => {
+    // "expected string, received undefined" tells an operator staring at a
+    // hosting dashboard nothing about what to type.
+    const { INTERNAL_TOKEN, ...rest } = valid;
+    expect(() => loadEnv(rest)).toThrow(/missing or empty/);
+    expect(() => loadEnv(rest)).not.toThrow(/received undefined/);
+  });
+
+  it('points at the file that lists what to set', () => {
+    const { INTERNAL_TOKEN, ...rest } = valid;
+    expect(() => loadEnv(rest)).toThrow(/\.env\.example/);
+  });
+
+  it('separates a genuinely invalid value from a missing one', () => {
+    const { INTERNAL_TOKEN, ...rest } = valid;
+    const msg = (() => {
+      try { loadEnv({ ...rest, PORT: 'eighty' }); return ''; }
+      catch (e) { return (e as Error).message; }
+    })();
+    expect(msg).toMatch(/missing or empty: .*INTERNAL_TOKEN/);
+    expect(msg).toMatch(/invalid: .*PORT/);
+  });
 });

@@ -23,10 +23,32 @@ export type Env = z.infer<typeof schema> & {
 export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
   const parsed = schema.safeParse(source);
   if (!parsed.success) {
-    const detail = parsed.error.issues
-      .map((i) => `${i.path.join('.')}: ${i.message}`)
-      .join('; ');
-    throw new Error(`Invalid environment: ${detail}`);
+    // Split "you never set this" from "you set it to something wrong". The
+    // first is what an operator filling in a hosting dashboard actually hits,
+    // and Zod's own wording for it ("expected string, received undefined")
+    // names no fix.
+    const missing: string[] = [];
+    const invalid: string[] = [];
+
+    for (const issue of parsed.error.issues) {
+      const name = issue.path.join('.');
+      const raw = source[name];
+      if (raw === undefined || raw.trim() === '') {
+        missing.push(name);
+      } else {
+        invalid.push(`${name} (${issue.message})`);
+      }
+    }
+
+    const parts: string[] = [];
+    if (missing.length > 0) parts.push(`missing or empty: ${missing.join(', ')}`);
+    if (invalid.length > 0) parts.push(`invalid: ${invalid.join(', ')}`);
+
+    throw new Error(
+      `Environment is not configured — ${parts.join('; ')}. ` +
+        'Every variable in api/.env.example must be set to a non-empty value. ' +
+        'Use a placeholder such as "pending" for ones you do not have yet.',
+    );
   }
   return {
     ...parsed.data,
