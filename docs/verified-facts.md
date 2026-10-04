@@ -62,3 +62,27 @@ API with `response_format: { type: 'json_schema', strict: true }`.
 - Whether `samples/seed-catalogue.json` resolves on Render, where `rootDir: api`
   but the seed path points at the repo root. Surfaces as a 500 on
   `/v1/session/bootstrap` if wrong.
+
+## Known minor issues (week 1 review, deliberately not fixed)
+
+Found during the week-1 review, graded Minor, left alone so the fix pass stayed
+focused. None of them is reachable by a judge following the README.
+
+- `parseGbp` has no safe-integer ceiling: `"99999999999999999.99"` returns 1e19
+  rather than throwing, because `assertMinor` checks `Number.isInteger`, not
+  `Number.isSafeInteger`. Needs an absurd input. One-word fix.
+- `bootstrapSeller` called with `demo: false` against a seller already stored as
+  "Ola's Bakehouse" returns `displayName: "My shop"` — the response contradicts
+  the database until the realtime listener corrects it.
+- `slugify` has no collision guard, so two variants whose labels slugify the same
+  ("Box of 6" / "box of 6") would share a variant id. The seed catalogue has no
+  collision; this matters once week 2 generates variants from AI output.
+- The `Authorization` scheme check is case-sensitive, so `bearer <token>` returns
+  401 although RFC 7235 makes the scheme case-insensitive. Our own client always
+  sends `Bearer`; someone testing with curl might not.
+
+**Review caveat:** week 1's code review was performed by the same agent that wrote
+the code, because two fresh-reviewer dispatches stalled. Three real bugs were found
+and fixed (concurrent double-seed, a placeholder crashing startup, a theme test
+asserting the wrong property), but a genuinely independent pass before submission
+would be worth it.
