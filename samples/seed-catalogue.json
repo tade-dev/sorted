@@ -1,0 +1,54 @@
+{
+  "seller": {
+    "displayName": "Ola's Bakehouse",
+    "personaTone": "hiya! thanks so much for getting in touch. let me know what you fancy and I'll sort you out x",
+    "timezone": "Europe/London"
+  },
+  "products": [
+    {
+      "name": "Lemon drizzle cake",
+      "description": "Zesty lemon sponge with a crunchy sugar crust.",
+      "basePrice": "32.00",
+      "deposit": null,
+      "variants": [
+        { "axis": "size", "label": "8 inch", "priceDelta": "0.00" },
+        { "axis": "size", "label": "10 inch", "priceDelta": "10.00" }
+      ]
+    },
+    {
+      "name": "Red velvet cake",
+      "description": "Red velvet sponge with cream cheese frosting.",
+      "basePrice": "36.00",
+      "deposit": null,
+      "variants": [{ "axis": "size", "label": "8 inch", "priceDelta": "0.00" }]
+    },
+    {
+      "name": "Brownie box",
+      "description": "Fudgy brownies, boxed.",
+      "basePrice": "14.00",
+      "deposit": null,
+      "variants": [
+        { "axis": "size", "label": "Box of 6", "priceDelta": "0.00" },
+        { "axis": "size", "label": "Box of 12", "priceDelta": "12.00" }
+      ]
+    },
+    {
+      "name": "Cinnamon buns",
+      "description": "Soft cinnamon buns with a vanilla glaze.",
+      "basePrice": "12.00",
+      "deposit": null,
+      "variants": [{ "axis": "size", "label": "Box of 4", "priceDelta": "0.00" }]
+    },
+    {
+      "name": "Custom celebration cake",
+      "description": "Two layers, your choice of flavour, decorated to order.",
+      "basePrice": "55.00",
+      "deposit": "20.00",
+      "variants": [
+        { "axis": "flavour", "label": "Vanilla", "priceDelta": "0.00" },
+        { "axis": "flavour", "label": "Chocolate", "priceDelta": "0.00" },
+        { "axis": "flavour", "label": "Red velvet", "priceDelta": "4.00" }
+      ]
+    }
+  ]
+}

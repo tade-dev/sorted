@@ -14,9 +14,16 @@ const env = loadEnv({
   INTERNAL_TOKEN: 't',
 });
 
+// /v1/health touches neither Firestore nor the verifier, so both are stubs.
+const deps = {
+  env,
+  db: {} as never,
+  verify: async () => ({ uid: 'seller-a' }),
+};
+
 describe('GET /v1/health', () => {
   it('reports ok and the sandbox environment', async () => {
-    const res = await request(createApp(env)).get('/v1/health');
+    const res = await request(createApp(deps)).get('/v1/health');
     expect(res.status).toBe(200);
     expect(res.body.ok).toBe(true);
     expect(res.body.paypalEnv).toBe('sandbox');
@@ -24,7 +31,7 @@ describe('GET /v1/health', () => {
   });
 
   it('returns the spec error shape for an unknown route', async () => {
-    const res = await request(createApp(env)).get('/v1/nope');
+    const res = await request(createApp(deps)).get('/v1/nope');
     expect(res.status).toBe(404);
     expect(res.body).toEqual({
       error: { code: 'NOT_FOUND', message: 'Route not found.' },
