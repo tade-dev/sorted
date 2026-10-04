@@ -1991,7 +1991,7 @@ Week 3 tests the DM parser against these, and judges feed them into the hosted b
 
 - [ ] **Step 1: Write the eight conversations**
 
-Each is a short exchange between a fictional buyer and Bea's Bakes, deliberately covering one hard case:
+Each is a short exchange between a fictional buyer and Ola's Bakehouse, deliberately covering one hard case:
 
 | File | Scenario | What it must exercise |
 |---|---|---|
@@ -2004,7 +2004,9 @@ Each is a short exchange between a fictional buyer and Bea's Bakes, deliberately
 | `07.png` | Buyer asks to pay a deposit now, balance on collection | `depositRequestedMinor` |
 | `08.png` | Buyer mentions a price the seller never quoted | `price_conflict` — catalogue price must win |
 
-Keep names invented (Amara, Dee, Priya, Tom), handles plausible but fake, and no platform logos or trademarks. Per the spec, all sample content is fictional.
+Use the design's own demo buyers so the screenshots match the screens: **Jess M (`jess.mcr`), Ade O, Priya K and Tom H**. Order the items from the seeded catalogue (lemon drizzle cake, red velvet cake, brownie box, cinnamon buns, custom celebration cake) except in `04.png`, where the whole point is a product that is not there. Handles should be plausible but fake, with no platform logos or trademarks. Per the spec, all sample content is fictional.
+
+Make `01.png` the canonical demo: **Jess asking for a lemon drizzle 10 inch and a brownie box of 6, collection Sat 10 Oct at 2pm** — the £56 order that `Draft.dc.html`, `Orders.dc.html` and `Paid.dc.html` all show. That is the screenshot the demo video uses.
 
 - [ ] **Step 2: Produce the images**
 

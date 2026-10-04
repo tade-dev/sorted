@@ -145,7 +145,7 @@ The existing Flutter scaffold at the repo root moves into `app/` in week 1. Web 
 | Field | Type | Notes |
 |---|---|---|
 | `id` | string | equals the Firebase Auth uid (anonymous) |
-| `displayName` | string | "Bea's Bakes" |
+| `displayName` | string | "Ola's Bakehouse" |
 | `personaTone` | string | a sample of the seller's own writing, fed to reply drafting |
 | `currency` | `'GBP'` | literal |
 | `timezone` | string | `'Europe/London'` |
