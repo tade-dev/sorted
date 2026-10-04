@@ -23,3 +23,7 @@ ui-debug.log
 # OS / editor
 .DS_Store
 .idea/
+
+# Local npm cache (workaround: ~/.npm has root-owned entries)
+.npm-cache/
+.npmrc
