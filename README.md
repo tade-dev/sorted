@@ -1,17 +1,24 @@
-# sorted
+# Sorted
 
-A new Flutter project.
+> From DM to paid. Sorted.
 
-## Getting Started
+Turn a DM conversation into a structured order with a real payment link, and track the payment automatically. Built for UK small sellers who take orders through Instagram, TikTok and WhatsApp.
 
-This project is a starting point for a Flutter application.
+**Live demo:** _(added in week 6)_
 
-A few resources to get you started if this is your first Flutter project:
+## Repo layout
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+| Path | What it is |
+|---|---|
+| `app/` | Flutter app (iOS, Android, web) |
+| `api/` | Node + TypeScript backend, deployed on Render |
+| `samples/` | Sample DM screenshots and the demo catalogue |
+| `docs/` | Design spec, implementation plans, architecture notes |
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Running locally
+
+_(filled in as the API and app land — see week 6)_
+
+## Licence
+
+MIT. See [LICENSE](LICENSE).
