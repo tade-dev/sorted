@@ -8,7 +8,9 @@
 
 **Tech Stack:** Flutter 3.47.2 / Dart 3.13.2, Node 22 + TypeScript, Express, Zod, Vitest + Supertest, Firebase (Firestore + Anonymous Auth + Admin SDK), `@firebase/rules-unit-testing`, Render.
 
-**Spec:** `docs/superpowers/specs/2026-10-02-sorted-design.md`
+**Spec:** `docs/superpowers/specs/2026-10-02-sorted-design.md` — see especially §13, which reconciles the visual design system with this plan.
+
+**Design:** `docs/design/DESIGN.md` plus `docs/design/screens/*.dc.html` are the visual source of truth. Task 10 encodes its tokens; Task 6's seed data must reproduce the numbers its screens show.
 
 ## Global Constraints
 
@@ -1081,6 +1083,7 @@ dart pub global activate flutterfire_cli
 cd /Users/bstar/Documents/development/apps/flutter/sorted/app
 flutter pub add firebase_core cloud_firestore firebase_auth
 flutter pub add flutter_riverpod go_router dio freezed_annotation json_annotation
+flutter pub add google_fonts lucide_icons
 flutter pub add --dev build_runner freezed json_serializable
 flutterfire configure --platforms=android,ios,web
 ```
@@ -1368,68 +1371,61 @@ The endpoint a judge's first page load hits. Covers Review Focus item 5.
 
 - [ ] **Step 1: Write `samples/seed-catalogue.json`**
 
-The Manchester home-baker persona from the spec. Prices are strings parsed by `parseGbp`, so the fixture stays human-editable.
+**These exact five products and prices come from `docs/design/screens/Catalogue.dc.html` and must not be changed.** The design's screens show a £56 total (lemon drizzle 10 inch £42 + brownie box of 6 £14) across Welcome, Draft, Orders and Paid. If the seed drifts, the demo no longer reproduces the screens, and the video shows different numbers from the designs.
+
+Prices are strings parsed by `parseGbp`, so the fixture stays human-editable.
 
 ```json
 {
   "seller": {
-    "displayName": "Bea's Bakes",
+    "displayName": "Ola's Bakehouse",
     "personaTone": "hiya! thanks so much for getting in touch. let me know what you fancy and I'll sort you out x",
     "timezone": "Europe/London"
   },
   "products": [
     {
-      "name": "Chocolate Fudge Celebration Cake",
-      "description": "Rich chocolate sponge, fudge buttercream, chocolate shards.",
-      "basePrice": "38.00",
+      "name": "Lemon drizzle cake",
+      "description": "Zesty lemon sponge with a crunchy sugar crust.",
+      "basePrice": "32.00",
+      "deposit": null,
       "variants": [
-        { "axis": "size", "label": "6 inch", "priceDelta": "-8.00" },
         { "axis": "size", "label": "8 inch", "priceDelta": "0.00" },
-        { "axis": "size", "label": "10 inch", "priceDelta": "12.00" }
+        { "axis": "size", "label": "10 inch", "priceDelta": "10.00" }
       ]
     },
     {
-      "name": "Biscoff Drip Cake",
-      "description": "Vanilla sponge, Biscoff buttercream, caramel drip.",
-      "basePrice": "42.00",
-      "variants": [
-        { "axis": "size", "label": "6 inch", "priceDelta": "-8.00" },
-        { "axis": "size", "label": "8 inch", "priceDelta": "0.00" },
-        { "axis": "size", "label": "10 inch", "priceDelta": "12.00" }
-      ]
+      "name": "Red velvet cake",
+      "description": "Red velvet sponge with cream cheese frosting.",
+      "basePrice": "36.00",
+      "deposit": null,
+      "variants": [{ "axis": "size", "label": "8 inch", "priceDelta": "0.00" }]
     },
     {
-      "name": "Red Velvet Cupcakes",
-      "description": "Box of cupcakes with cream cheese frosting.",
-      "basePrice": "18.00",
+      "name": "Brownie box",
+      "description": "Fudgy brownies, boxed.",
+      "basePrice": "14.00",
+      "deposit": null,
       "variants": [
         { "axis": "size", "label": "Box of 6", "priceDelta": "0.00" },
-        { "axis": "size", "label": "Box of 12", "priceDelta": "14.00" }
+        { "axis": "size", "label": "Box of 12", "priceDelta": "12.00" }
       ]
     },
     {
-      "name": "Lemon Drizzle Loaf",
-      "description": "Zesty lemon loaf with a crunchy sugar crust.",
-      "basePrice": "14.00",
-      "variants": []
+      "name": "Cinnamon buns",
+      "description": "Soft cinnamon buns with a vanilla glaze.",
+      "basePrice": "12.00",
+      "deposit": null,
+      "variants": [{ "axis": "size", "label": "Box of 4", "priceDelta": "0.00" }]
     },
     {
-      "name": "Custom Number Cake",
-      "description": "Number-shaped cake, two layers, your choice of flavour.",
-      "basePrice": "45.00",
+      "name": "Custom celebration cake",
+      "description": "Two layers, your choice of flavour, decorated to order.",
+      "basePrice": "55.00",
+      "deposit": "20.00",
       "variants": [
         { "axis": "flavour", "label": "Vanilla", "priceDelta": "0.00" },
         { "axis": "flavour", "label": "Chocolate", "priceDelta": "0.00" },
         { "axis": "flavour", "label": "Red velvet", "priceDelta": "4.00" }
-      ]
-    },
-    {
-      "name": "Brownie Tray",
-      "description": "Fudgy brownie tray, cut into squares.",
-      "basePrice": "22.00",
-      "variants": [
-        { "axis": "size", "label": "9 squares", "priceDelta": "0.00" },
-        { "axis": "size", "label": "16 squares", "priceDelta": "10.00" }
       ]
     }
   ]
@@ -1445,6 +1441,7 @@ import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { bootstrapSeller } from '../src/domain/seed.js';
+import { applyDelta, sumMinor } from '../src/domain/money.js';
 
 process.env.FIRESTORE_EMULATOR_HOST = '127.0.0.1:8080';
 
@@ -1462,28 +1459,63 @@ beforeEach(async () => {
   await Promise.all(sellers.map((s) => db.recursiveDelete(s)));
 });
 
+async function productNamed(name: string) {
+  const snap = await db
+    .collection('sellers/seller-a/products')
+    .where('name', '==', name)
+    .get();
+  return snap.docs[0]!.data();
+}
+
 describe('bootstrapSeller', () => {
   it('creates the seller and seeds the demo catalogue', async () => {
     const result = await bootstrapSeller(db, 'seller-a', { demo: true });
-    expect(result.seller.displayName).toBe("Bea's Bakes");
+    expect(result.seller.displayName).toBe("Ola's Bakehouse");
     expect(result.seller.currency).toBe('GBP');
-    expect(result.seededProducts).toBe(6);
+    expect(result.seededProducts).toBe(5);
 
     const products = await db.collection('sellers/seller-a/products').get();
-    expect(products.size).toBe(6);
+    expect(products.size).toBe(5);
   });
 
   it('stores prices as integer pence, not floats', async () => {
     await bootstrapSeller(db, 'seller-a', { demo: true });
-    const snap = await db
-      .collection('sellers/seller-a/products')
-      .where('name', '==', 'Chocolate Fudge Celebration Cake')
-      .get();
-    const product = snap.docs[0]!.data();
-    expect(product.basePriceMinor).toBe(3800);
+    const product = await productNamed('Lemon drizzle cake');
+    expect(product.basePriceMinor).toBe(3200);
     expect(Number.isInteger(product.basePriceMinor)).toBe(true);
-    const sixInch = product.variants.find((v: { label: string }) => v.label === '6 inch');
-    expect(sixInch.priceDeltaMinor).toBe(-800);
+    const tenInch = product.variants.find((v: { label: string }) => v.label === '10 inch');
+    expect(tenInch.priceDeltaMinor).toBe(1000);
+  });
+
+  it('reproduces the £56 demo order the design screens show', async () => {
+    // Lemon drizzle 10 inch (£42) + brownie box of 6 (£14) = £56.00, the
+    // total printed on Welcome, Draft, Orders and Paid. If this fails the
+    // seed has drifted from docs/design/screens.
+    await bootstrapSeller(db, 'seller-a', { demo: true });
+    const cake = await productNamed('Lemon drizzle cake');
+    const brownies = await productNamed('Brownie box');
+
+    const tenInch = cake.variants.find((v: { label: string }) => v.label === '10 inch');
+    const boxOfSix = brownies.variants.find((v: { label: string }) => v.label === 'Box of 6');
+
+    const cakeLine = applyDelta(cake.basePriceMinor, tenInch.priceDeltaMinor);
+    const brownieLine = applyDelta(brownies.basePriceMinor, boxOfSix.priceDeltaMinor);
+
+    expect(cakeLine).toBe(4200);
+    expect(brownieLine).toBe(1400);
+    expect(sumMinor([cakeLine, brownieLine])).toBe(5600);
+  });
+
+  it('stores the product-level deposit for the celebration cake', async () => {
+    await bootstrapSeller(db, 'seller-a', { demo: true });
+    const cake = await productNamed('Custom celebration cake');
+    expect(cake.basePriceMinor).toBe(5500);
+    expect(cake.depositMinor).toBe(2000);
+  });
+
+  it('leaves depositMinor null for products without one', async () => {
+    await bootstrapSeller(db, 'seller-a', { demo: true });
+    expect((await productNamed('Brownie box')).depositMinor).toBeNull();
   });
 
   it('is idempotent: a second call does not duplicate products', async () => {
@@ -1493,7 +1525,7 @@ describe('bootstrapSeller', () => {
 
     expect(second.seededProducts).toBe(0);
     const products = await db.collection('sellers/seller-a/products').get();
-    expect(products.size).toBe(6);
+    expect(products.size).toBe(5);
   });
 
   it('creates a bare seller when demo is false', async () => {
@@ -1506,11 +1538,9 @@ describe('bootstrapSeller', () => {
 
   it('gives every variant a stable slug id', async () => {
     await bootstrapSeller(db, 'seller-a', { demo: true });
-    const snap = await db
-      .collection('sellers/seller-a/products')
-      .where('name', '==', 'Red Velvet Cupcakes')
-      .get();
-    const ids = snap.docs[0]!.data().variants.map((v: { id: string }) => v.id);
+    const ids = (await productNamed('Brownie box')).variants.map(
+      (v: { id: string }) => v.id,
+    );
     expect(ids).toEqual(['box-of-6', 'box-of-12']);
   });
 });
@@ -1539,6 +1569,8 @@ export type SeedProduct = {
   name: string;
   description: string;
   basePrice: string;
+  /** Default deposit to book this item, e.g. the celebration cake's £20. */
+  deposit: string | null;
   variants: SeedVariant[];
 };
 export type SeedFile = {
@@ -1613,6 +1645,7 @@ export async function bootstrapSeller(
       name: product.name,
       description: product.description,
       basePriceMinor: parseGbp(product.basePrice),
+      depositMinor: product.deposit === null ? null : parseGbp(product.deposit),
       currency: 'GBP',
       photoUrl: null,
       variants: product.variants.map((v) => ({
@@ -2005,12 +2038,452 @@ price conflict. All names and handles are invented."
 
 ---
 
+### Task 10: Design tokens as ThemeData and a ThemeExtension
+
+`docs/design/DESIGN.md` defines 21 colour tokens, a two-font type scale and a shape system. Material's `ColorScheme` has no home for `warningTint` or `darkLink`, so the custom tokens go in a `ThemeExtension` reachable from any `BuildContext`. Every screen in Plans 2 to 5 reads from here, so no widget ever hardcodes a hex value.
+
+**Files:**
+- Create: `app/lib/core/theme/sorted_colors.dart`, `app/lib/core/theme/sorted_shape.dart`, `app/lib/core/theme/sorted_theme.dart`
+- Modify: `app/lib/main.dart`
+- Test: `app/test/theme_test.dart`
+
+**Interfaces:**
+- Consumes: `google_fonts` from Task 4 Step 10.
+- Produces:
+  - `class SortedColors extends ThemeExtension<SortedColors>` with all 21 tokens as `Color` fields, plus `static SortedColors of(BuildContext)` 
+  - `abstract final class SortedShape` with the spacing, radius and height constants
+  - `ThemeData sortedTheme()` from `sorted_theme.dart`
+
+- [ ] **Step 1: Write the failing test**
+
+Create `app/test/theme_test.dart`:
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:sorted/core/theme/sorted_colors.dart';
+import 'package:sorted/core/theme/sorted_shape.dart';
+import 'package:sorted/core/theme/sorted_theme.dart';
+
+void main() {
+  testWidgets('SortedColors is reachable from any BuildContext', (tester) async {
+    SortedColors? captured;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sortedTheme(),
+        home: Builder(
+          builder: (context) {
+            captured = SortedColors.of(context);
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
+
+    expect(captured, isNotNull);
+  });
+
+  testWidgets('tokens match DESIGN.md exactly', (tester) async {
+    late SortedColors c;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sortedTheme(),
+        home: Builder(
+          builder: (context) {
+            c = SortedColors.of(context);
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
+
+    expect(c.ink, const Color(0xFF001C64));
+    expect(c.primary, const Color(0xFF0070E0));
+    expect(c.success, const Color(0xFF147A47));
+    expect(c.successTint, const Color(0xFFE3F4EA));
+    expect(c.warningTint, const Color(0xFFFFF4D6));
+    expect(c.warningText, const Color(0xFF7A5200));
+    expect(c.neutralTint, const Color(0xFFEBEEF3));
+    expect(c.darkLink, const Color(0xFF123C96));
+    expect(c.accentCyan, const Color(0xFF60CDFF));
+    expect(c.paidBar, const Color(0xFF5BD08F));
+  });
+
+  testWidgets('the scaffold background is the background token', (tester) async {
+    await tester.pumpWidget(MaterialApp(theme: sortedTheme(), home: const Scaffold()));
+    final theme = Theme.of(tester.element(find.byType(Scaffold)));
+    expect(theme.scaffoldBackgroundColor, const Color(0xFFF5F7FA));
+  });
+
+  test('status colours are distinguishable by lightness, not hue alone', () {
+    // DESIGN.md requires this so the Paid/Waiting/Draft chips stay readable
+    // for colour-blind users and in a greyscale screenshot.
+    const colors = SortedColors.light;
+    final lightness = [colors.successTint, colors.warningTint, colors.neutralTint]
+        .map((c) => HSLColor.fromColor(c).lightness)
+        .toList();
+
+    for (var i = 0; i < lightness.length; i++) {
+      for (var j = i + 1; j < lightness.length; j++) {
+        expect(
+          (lightness[i] - lightness[j]).abs(),
+          greaterThan(0.02),
+          reason: 'status tints $i and $j are too close in lightness',
+        );
+      }
+    }
+  });
+
+  test('lerp returns a SortedColors so theme animation does not crash', () {
+    final mid = SortedColors.light.lerp(SortedColors.light, 0.5);
+    expect(mid, isA<SortedColors>());
+  });
+
+  test('shape constants match DESIGN.md', () {
+    expect(SortedShape.screenPadding, 20.0);
+    expect(SortedShape.primaryButtonHeight, 54.0);
+    expect(SortedShape.primaryButtonRadius, 16.0);
+    expect(SortedShape.statusChipHeight, 26.0);
+    expect(SortedShape.selectableChipHeight, 40.0);
+    expect(SortedShape.minTouchTarget, 44.0);
+  });
+}
+```
+
+- [ ] **Step 2: Run the test to verify it fails**
+
+```bash
+cd app && flutter test test/theme_test.dart
+```
+
+Expected: FAIL — `core/theme/sorted_colors.dart` does not exist.
+
+- [ ] **Step 3: Write `app/lib/core/theme/sorted_colors.dart`**
+
+```dart
+import 'package:flutter/material.dart';
+
+/// The design tokens from docs/design/DESIGN.md that Material's ColorScheme
+/// has no home for. Read via SortedColors.of(context); never hardcode a hex
+/// value in a widget.
+@immutable
+class SortedColors extends ThemeExtension<SortedColors> {
+  const SortedColors({
+    required this.background,
+    required this.surface,
+    required this.ink,
+    required this.muted,
+    required this.line,
+    required this.primary,
+    required this.primaryTint,
+    required this.success,
+    required this.successTint,
+    required this.highlight,
+    required this.warningTint,
+    required this.warningText,
+    required this.warningBorder,
+    required this.neutralTint,
+    required this.darkBg,
+    required this.darkSurface,
+    required this.darkTrack,
+    required this.darkLink,
+    required this.onDarkMuted,
+    required this.accentCyan,
+    required this.paidBar,
+  });
+
+  final Color background;
+  final Color surface;
+  final Color ink;
+  final Color muted;
+  final Color line;
+  final Color primary;
+  final Color primaryTint;
+  final Color success;
+  final Color successTint;
+  final Color highlight;
+  final Color warningTint;
+  final Color warningText;
+  final Color warningBorder;
+  final Color neutralTint;
+  final Color darkBg;
+  final Color darkSurface;
+  final Color darkTrack;
+  final Color darkLink;
+  final Color onDarkMuted;
+  final Color accentCyan;
+  final Color paidBar;
+
+  static const light = SortedColors(
+    background: Color(0xFFF5F7FA),
+    surface: Color(0xFFFFFFFF),
+    ink: Color(0xFF001C64),
+    muted: Color(0xFF515A6B),
+    line: Color(0xFFDCE2EA),
+    primary: Color(0xFF0070E0),
+    primaryTint: Color(0xFFE6F0FC),
+    success: Color(0xFF147A47),
+    successTint: Color(0xFFE3F4EA),
+    highlight: Color(0xFFFFC439),
+    warningTint: Color(0xFFFFF4D6),
+    warningText: Color(0xFF7A5200),
+    warningBorder: Color(0xFFF1D27A),
+    neutralTint: Color(0xFFEBEEF3),
+    darkBg: Color(0xFF00123F),
+    darkSurface: Color(0xFF0B2A78),
+    darkTrack: Color(0xFF0F3488),
+    darkLink: Color(0xFF123C96),
+    onDarkMuted: Color(0xFFB9C8EE),
+    accentCyan: Color(0xFF60CDFF),
+    paidBar: Color(0xFF5BD08F),
+  );
+
+  static SortedColors of(BuildContext context) =>
+      Theme.of(context).extension<SortedColors>() ?? light;
+
+  @override
+  SortedColors copyWith({
+    Color? background,
+    Color? surface,
+    Color? ink,
+    Color? muted,
+    Color? line,
+    Color? primary,
+    Color? primaryTint,
+    Color? success,
+    Color? successTint,
+    Color? highlight,
+    Color? warningTint,
+    Color? warningText,
+    Color? warningBorder,
+    Color? neutralTint,
+    Color? darkBg,
+    Color? darkSurface,
+    Color? darkTrack,
+    Color? darkLink,
+    Color? onDarkMuted,
+    Color? accentCyan,
+    Color? paidBar,
+  }) {
+    return SortedColors(
+      background: background ?? this.background,
+      surface: surface ?? this.surface,
+      ink: ink ?? this.ink,
+      muted: muted ?? this.muted,
+      line: line ?? this.line,
+      primary: primary ?? this.primary,
+      primaryTint: primaryTint ?? this.primaryTint,
+      success: success ?? this.success,
+      successTint: successTint ?? this.successTint,
+      highlight: highlight ?? this.highlight,
+      warningTint: warningTint ?? this.warningTint,
+      warningText: warningText ?? this.warningText,
+      warningBorder: warningBorder ?? this.warningBorder,
+      neutralTint: neutralTint ?? this.neutralTint,
+      darkBg: darkBg ?? this.darkBg,
+      darkSurface: darkSurface ?? this.darkSurface,
+      darkTrack: darkTrack ?? this.darkTrack,
+      darkLink: darkLink ?? this.darkLink,
+      onDarkMuted: onDarkMuted ?? this.onDarkMuted,
+      accentCyan: accentCyan ?? this.accentCyan,
+      paidBar: paidBar ?? this.paidBar,
+    );
+  }
+
+  @override
+  SortedColors lerp(ThemeExtension<SortedColors>? other, double t) {
+    if (other is! SortedColors) return this;
+    Color c(Color a, Color b) => Color.lerp(a, b, t)!;
+    return SortedColors(
+      background: c(background, other.background),
+      surface: c(surface, other.surface),
+      ink: c(ink, other.ink),
+      muted: c(muted, other.muted),
+      line: c(line, other.line),
+      primary: c(primary, other.primary),
+      primaryTint: c(primaryTint, other.primaryTint),
+      success: c(success, other.success),
+      successTint: c(successTint, other.successTint),
+      highlight: c(highlight, other.highlight),
+      warningTint: c(warningTint, other.warningTint),
+      warningText: c(warningText, other.warningText),
+      warningBorder: c(warningBorder, other.warningBorder),
+      neutralTint: c(neutralTint, other.neutralTint),
+      darkBg: c(darkBg, other.darkBg),
+      darkSurface: c(darkSurface, other.darkSurface),
+      darkTrack: c(darkTrack, other.darkTrack),
+      darkLink: c(darkLink, other.darkLink),
+      onDarkMuted: c(onDarkMuted, other.onDarkMuted),
+      accentCyan: c(accentCyan, other.accentCyan),
+      paidBar: c(paidBar, other.paidBar),
+    );
+  }
+}
+```
+
+- [ ] **Step 4: Write `app/lib/core/theme/sorted_shape.dart`**
+
+```dart
+/// Shape and spacing constants from docs/design/DESIGN.md.
+abstract final class SortedShape {
+  static const screenPadding = 20.0;
+  static const screenPaddingWide = 24.0;
+
+  static const primaryButtonHeight = 54.0;
+  static const primaryButtonRadius = 16.0;
+  static const secondaryButtonHeight = 48.0;
+
+  static const cardRadius = 18.0;
+  static const cardRadiusLarge = 22.0;
+  static const productTileRadius = 14.0;
+
+  static const pillRadius = 999.0;
+  static const statusChipHeight = 26.0;
+  static const selectableChipHeight = 40.0;
+
+  static const minTouchTarget = 44.0;
+  static const iconSize = 22.0;
+  static const iconStroke = 1.8;
+}
+```
+
+- [ ] **Step 5: Write `app/lib/core/theme/sorted_theme.dart`**
+
+Bricolage Grotesque carries headings and hero numbers; Plus Jakarta Sans carries body and labels. The negative letter-spacing on headings is from the design's type scale.
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import 'sorted_colors.dart';
+import 'sorted_shape.dart';
+
+ThemeData sortedTheme() {
+  const c = SortedColors.light;
+
+  final display = GoogleFonts.bricolageGrotesqueTextTheme();
+  final body = GoogleFonts.plusJakartaSansTextTheme();
+
+  return ThemeData(
+    useMaterial3: true,
+    scaffoldBackgroundColor: c.background,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: c.primary,
+      primary: c.primary,
+      surface: c.surface,
+      error: const Color(0xFFB3261E),
+    ),
+    extensions: const <ThemeExtension<dynamic>>[c],
+    textTheme: TextTheme(
+      // Bricolage Grotesque: wordmark, hero numbers, headings.
+      displayLarge: display.displayLarge?.copyWith(
+        fontWeight: FontWeight.w700,
+        fontSize: 68,
+        color: c.ink,
+      ),
+      headlineLarge: display.headlineLarge?.copyWith(
+        fontWeight: FontWeight.w700,
+        fontSize: 32,
+        letterSpacing: -0.8,
+        color: c.ink,
+      ),
+      headlineMedium: display.headlineMedium?.copyWith(
+        fontWeight: FontWeight.w700,
+        fontSize: 28,
+        letterSpacing: -0.6,
+        color: c.ink,
+      ),
+      titleLarge: display.titleLarge?.copyWith(
+        fontWeight: FontWeight.w700,
+        fontSize: 19,
+        color: c.ink,
+      ),
+      // Plus Jakarta Sans: body, labels, captions.
+      bodyLarge: body.bodyLarge?.copyWith(fontSize: 16, height: 1.5, color: c.ink),
+      bodyMedium: body.bodyMedium?.copyWith(fontSize: 15, height: 1.45, color: c.muted),
+      labelLarge: body.labelLarge?.copyWith(fontSize: 17, fontWeight: FontWeight.w600),
+      labelMedium: body.labelMedium?.copyWith(fontSize: 14, fontWeight: FontWeight.w600),
+      bodySmall: body.bodySmall?.copyWith(fontSize: 13, color: c.muted),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: c.primary,
+        foregroundColor: Colors.white,
+        minimumSize: const Size.fromHeight(SortedShape.primaryButtonHeight),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(SortedShape.primaryButtonRadius),
+        ),
+      ),
+    ),
+    cardTheme: CardThemeData(
+      color: c.surface,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(SortedShape.cardRadius),
+        side: BorderSide(color: c.line),
+      ),
+    ),
+    dividerTheme: DividerThemeData(color: c.line, thickness: 1, space: 1),
+  );
+}
+```
+
+- [ ] **Step 6: Run the test to verify it passes**
+
+```bash
+cd app && flutter test test/theme_test.dart
+```
+
+Expected: PASS, 6 tests. `GoogleFonts` falls back to a bundled default in tests without network access, which is fine — the tests assert colours and shape, not glyph metrics.
+
+- [ ] **Step 7: Apply the theme in `main.dart`**
+
+In the `SortedApp` widget from Task 4 Step 11, replace the inline `ThemeData` with `sortedTheme()`:
+
+```dart
+return MaterialApp(
+  title: 'Sorted',
+  theme: sortedTheme(),
+  home: Scaffold(
+    body: Center(
+      child: Text('Signed in as ${FirebaseAuth.instance.currentUser?.uid}'),
+    ),
+  ),
+);
+```
+
+Add `import 'core/theme/sorted_theme.dart';` at the top.
+
+- [ ] **Step 8: Verify the app still runs and analyse is clean**
+
+```bash
+cd app && flutter analyze && flutter test
+```
+
+Expected: `No issues found!` and all tests pass. The default `test/widget_test.dart` from the Flutter scaffold asserts a counter that no longer exists — delete it.
+
+- [ ] **Step 9: Commit**
+
+```bash
+cd /Users/bstar/Documents/development/apps/flutter/sorted
+git add app
+git commit -m "feat(app): add the design tokens as ThemeData and a ThemeExtension
+
+Encodes all 21 colour tokens, the two-font type scale and the shape
+system from docs/design/DESIGN.md, so no widget in later plans hardcodes
+a hex value. Includes the design's requirement that the status tints stay
+distinguishable by lightness rather than hue alone."
+```
+
+---
+
 ## Plan complete
 
 **What exists at the end of Plan 1:** a restructured monorepo with a building Flutter web target that signs in anonymously and reads Firebase, a Node API deployed on a non-sleeping Render instance with validated config and authenticated requests, a fully tested GBP money module, Firestore rules proven to deny client writes from both the emulator and a real client, a one-call demo-seller bootstrap with a seeded baker catalogue, the week-1 unknowns written down as verified facts, a public GitHub repo with a detectable MIT licence, and eight test screenshots.
 
 **One deliberate deviation from the spec's week plan:** `money.ts` moves from week 2 into Task 3 here. Every later task stores a price, so the module that forbids floats belongs in the foundations rather than alongside the first feature that needs it.
 
-**Test count:** 36 across 6 suites (`env` 7, `health` 2, `money` 16, `firestore-rules` 8, `auth` 6, `seed` 5). Running the rules and seed suites needs `firebase emulators:start --only firestore,auth`.
+**Test count:** 53 across 7 suites. Node: `env` 7, `health` 2, `money` 16, `firestore-rules` 8, `auth` 6, `seed` 8 (47 total, via `npm test` in `api/`). Flutter: `theme` 6 (via `flutter test` in `app/`). The rules and seed suites need `firebase emulators:start --only firestore,auth`.
 
 **Next:** Plan 2 (Catalogue from photos) — the five Zod AI schemas, `POST /v1/catalogue/extract`, product CRUD, and the Flutter catalogue and review screens.
