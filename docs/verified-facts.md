@@ -36,7 +36,24 @@ way that contradicts this.
 ## OpenAI
 
 - API key: held by the operator, in `api/.env`
-- `OPENAI_VISION_MODEL`: NOT YET PINNED — currently the placeholder `pending`
+- **`OPENAI_VISION_MODEL` = `gpt-5.5`** (pinned 2026-10-04)
+
+Chosen by running the same DM screenshot (`samples/dm-screenshots/01.png`)
+through four candidates with a strict `json_schema` response format:
+
+| Model | Latency | Output tokens | Result |
+|---|---|---|---|
+| **gpt-5.5** | 2.4s | 114 | Correct. Variant labels came back as `"10 inch"` / `"box of 6"`, matching the catalogue's own vocabulary |
+| gpt-5.4-mini | 3.1s | 139 | Polluted `variantLabels` with product names; invented a date ambiguity |
+| gpt-5-mini | 12.7s | 1585 | Correct but 5x slower and 14x the output tokens |
+| gpt-4.1-mini | 1.8s | 92 | **Parsed "brownie box of 6" as `qty: 6`** — would charge GBP 84 instead of GBP 14 |
+
+The gpt-4.1-mini result is why the model is pinned in env and not chosen by
+price: it was the cheapest and fastest, and silently wrong about money.
+
+All four resolved "sat 10th oct" to `2026-10-10` correctly (a real Saturday).
+Vision + strict structured output confirmed working on the Chat Completions
+API with `response_format: { type: 'json_schema', strict: true }`.
 
 ## Still unverified
 
