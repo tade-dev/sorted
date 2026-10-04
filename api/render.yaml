@@ -11,7 +11,10 @@ services:
     plan: free
     region: frankfurt
     rootDir: api
-    buildCommand: npm ci && npm run build
+    # --include=dev is required, not optional. NODE_ENV=production below makes
+    # npm skip devDependencies, and TypeScript is one, so a plain `npm ci`
+    # leaves no tsc and the build dies with "tsc: command not found".
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm start
     healthCheckPath: /v1/health
     envVars:
