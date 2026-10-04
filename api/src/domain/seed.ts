@@ -54,61 +54,66 @@ export async function bootstrapSeller(
   opts: { demo: boolean },
 ): Promise<{ seller: SellerDoc; seededProducts: number }> {
   const sellerRef = db.doc(`sellers/${sellerId}`);
-  const existing = await sellerRef.get();
   const seed = loadSeedFile();
 
-  const alreadySeeded = existing.exists && existing.get('demoSeeded') === true;
+  // A transaction, not a plain read-then-batch. Two bootstraps racing (a judge
+  // double-tapping during a cold start) would otherwise both read
+  // demoSeeded=false and both seed, leaving a doubled catalogue. Because this
+  // reads sellerRef and then writes it, the loser is retried by Firestore and
+  // sees demoSeeded=true on the second pass.
+  return db.runTransaction(async (tx) => {
+    const existing = await tx.get(sellerRef);
+    const alreadySeeded = existing.exists && existing.get('demoSeeded') === true;
 
-  const seller: SellerDoc = {
-    id: sellerId,
-    displayName: opts.demo ? seed.seller.displayName : 'My shop',
-    personaTone: opts.demo ? seed.seller.personaTone : '',
-    currency: 'GBP',
-    timezone: seed.seller.timezone,
-    demoSeeded: opts.demo || alreadySeeded,
-  };
-
-  if (!existing.exists) {
-    // demoSeeded stays false until the product batch commits, so a seed that
-    // fails halfway cannot leave a seller that can never be seeded again.
-    await sellerRef.set({
-      ...seller,
-      demoSeeded: false,
-      createdAt: FieldValue.serverTimestamp(),
-    });
-  }
-
-  if (!opts.demo || alreadySeeded) {
-    return { seller, seededProducts: 0 };
-  }
-
-  const batch = db.batch();
-  for (const product of seed.products) {
-    const ref = db.collection(`sellers/${sellerId}/products`).doc();
-    batch.set(ref, {
-      id: ref.id,
-      name: product.name,
-      description: product.description,
-      basePriceMinor: parseGbp(product.basePrice),
-      depositMinor: product.deposit === null ? null : parseGbp(product.deposit),
+    const seller: SellerDoc = {
+      id: sellerId,
+      displayName: opts.demo ? seed.seller.displayName : 'My shop',
+      personaTone: opts.demo ? seed.seller.personaTone : '',
       currency: 'GBP',
-      photoUrl: null,
-      variants: product.variants.map((v) => ({
-        id: slugify(v.label),
-        axis: v.axis,
-        label: v.label,
-        priceDeltaMinor: parseDelta(v.priceDelta),
-        active: true,
-      })),
-      active: true,
-      source: 'manual',
-      aiConfidence: null,
-      createdAt: FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp(),
-    });
-  }
-  batch.set(sellerRef, { demoSeeded: true }, { merge: true });
-  await batch.commit();
+      timezone: seed.seller.timezone,
+      demoSeeded: opts.demo || alreadySeeded,
+    };
 
-  return { seller, seededProducts: seed.products.length };
+    if (!existing.exists) {
+      // demoSeeded stays false until the products land in the same commit, so a
+      // seed that fails cannot leave a seller that can never be seeded again.
+      tx.set(sellerRef, {
+        ...seller,
+        demoSeeded: false,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+    }
+
+    if (!opts.demo || alreadySeeded) {
+      return { seller, seededProducts: 0 };
+    }
+
+    for (const product of seed.products) {
+      const ref = db.collection(`sellers/${sellerId}/products`).doc();
+      tx.set(ref, {
+        id: ref.id,
+        name: product.name,
+        description: product.description,
+        basePriceMinor: parseGbp(product.basePrice),
+        depositMinor: product.deposit === null ? null : parseGbp(product.deposit),
+        currency: 'GBP',
+        photoUrl: null,
+        variants: product.variants.map((v) => ({
+          id: slugify(v.label),
+          axis: v.axis,
+          label: v.label,
+          priceDeltaMinor: parseDelta(v.priceDelta),
+          active: true,
+        })),
+        active: true,
+        source: 'manual',
+        aiConfidence: null,
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    }
+    tx.set(sellerRef, { demoSeeded: true }, { merge: true });
+
+    return { seller, seededProducts: seed.products.length };
+  });
 }

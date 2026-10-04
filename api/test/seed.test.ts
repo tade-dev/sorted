@@ -93,6 +93,20 @@ describe('bootstrapSeller', () => {
     expect(products.size).toBe(5);
   });
 
+  it('is idempotent under concurrency, not just in sequence', async () => {
+    // A judge double-tapping during a Render cold start fires two bootstraps
+    // before either finishes. Read-then-write without a transaction lets both
+    // see demoSeeded=false and both seed, leaving a doubled catalogue that
+    // makes every later DM match ambiguous.
+    await Promise.all([
+      bootstrapSeller(db, 'seller-a', { demo: true }),
+      bootstrapSeller(db, 'seller-a', { demo: true }),
+    ]);
+
+    const products = await db.collection('sellers/seller-a/products').get();
+    expect(products.size).toBe(5);
+  });
+
   it('creates a bare seller when demo is false', async () => {
     const result = await bootstrapSeller(db, 'seller-b', { demo: false });
     expect(result.seededProducts).toBe(0);
