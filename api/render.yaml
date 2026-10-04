@@ -2,9 +2,13 @@ services:
   - type: web
     name: sorted-api
     runtime: node
-    # NOT free: the free tier sleeps after 15 minutes, which drops PayPal
-    # webhooks and gives judges ~50s cold starts on the hosted demo.
-    plan: starter
+    # UPGRADE TO `starter` BEFORE WEEK 4.
+    # The free tier sleeps after 15 minutes of inactivity. That is harmless
+    # while building, but from week 4 it breaks two things: PayPal webhooks
+    # delivered to a sleeping service, and the hourly nudge sweep, which cannot
+    # run at all if nothing is awake to run it. It also gives judges a ~50s
+    # cold start on the hosted demo in week 6.
+    plan: free
     region: frankfurt
     rootDir: api
     buildCommand: npm ci && npm run build
