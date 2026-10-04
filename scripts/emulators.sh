@@ -17,4 +17,10 @@ if ! java -version 2>&1 | grep -qE '"(2[1-9]|[3-9][0-9])'; then
 fi
 
 cd "$(dirname "$0")/.."
+
+# --project demo-sorted is deliberate and must NOT be changed to the real
+# project id in .firebaserc. The demo- prefix tells the emulator suite to run
+# fully offline with no credentials, which is what keeps the test suite from
+# ever reaching production data. Tests wipe the sellers collection between
+# cases; pointed at the real project, they would wipe it there.
 exec firebase emulators:start --only firestore,auth --project demo-sorted "$@"
