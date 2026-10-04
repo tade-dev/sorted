@@ -4,7 +4,7 @@
 
 Turn a DM conversation into a structured order with a real payment link, and track the payment automatically. Built for UK small sellers who take orders through Instagram, TikTok and WhatsApp.
 
-**Live demo:** _(added in week 6)_
+**API:** https://sorted-api-a4zo.onrender.com/v1/health · **Live demo:** _(web build, week 6)_
 
 ## Repo layout
 
