@@ -550,3 +550,53 @@ No third-party trademarks or copyrighted music. All DM conversations are fiction
 As the brief states: no WhatsApp or Instagram API integration (Meta business verification cannot happen in the timeline); single sandbox merchant, with per-seller PayPal onboarding as future work; UK only, GBP, UK English; no buyer-side app. The name "PayPal" appears nowhere in the product name or logo.
 
 Added by this spec: no AG Grid or Bryntum dashboards (would need a second React frontend and cost the buffer week); no Elasticsearch (its 14-day trial deletes the project on expiry, and a 20-item catalogue does not need vector search); no multi-currency; no Zapier, KERNEL, Astropods or Channel3 integration.
+
+---
+
+## 13. Design system reconciliation (added 2026-10-04)
+
+`docs/design/DESIGN.md` plus the fourteen screens in `docs/design/screens/` are now the **visual source of truth**. The screens are references to rebuild as Flutter widgets, not code to port. Where this spec and the design disagree on layout, copy or colour, the design wins. Where they disagree on behaviour, this section records the resolution.
+
+### Decisions taken
+
+| Question | Decision |
+|---|---|
+| Onboarding (`Main` → `Setup` → `Connect`) vs "instant demo seller" | **Keep all three, with Skip on each.** They carry the buyer-protection pitch and the "How Sorted works" explainer, which earn marks on Potential Impact. Anonymous auth still happens on launch, so Skip lands on a working seeded Home. |
+| What "Connect PayPal" does | **No OAuth.** The button attaches the seller to the shared sandbox merchant and the small print says so honestly: this demo uses a shared sandbox merchant, and per-seller onboarding through PayPal Partner is next. Promising a sign-in that does not exist would cost more on Technological Implementation than the screen gains. |
+| Fifth tab (`Settings`, no design file) | **Build a minimal Settings screen.** Shop name, the tone sample that feeds reply drafting, shared-sandbox-merchant info, and links to the repo and licence. The tone field is genuinely wired to the AI rather than decorative. |
+| PayPal's palette (`#001C64`, `#0070E0`) | **Keep.** The rules forbid the name in the product name and logo, not the colours, and DESIGN.md already rules out the logo and imitation PayPal buttons. |
+
+### Model and feature changes the design implies
+
+1. **Product-level deposit.** `Catalogue.dc.html` shows "Custom celebration cake — £20 deposit to book, from £55". Add `depositMinor: int | null` to the product model as the default deposit for that item. The order's own `depositMinor` still wins when set.
+2. **Order timeline is derived, not stored.** `Paid.dc.html` shows four entries: "Read from Jess's screenshot", "Checkout link sent", "Jess paid with PayPal", "Payment received". The first two come from `createdAt` and `linkSentAt`; the last two from `paymentEvents`. No new collection needed.
+3. **Thank-you message is a sixth AI output.** `Paid.dc.html` has "Copy thank-you message". Implement as a `mode` parameter on reply drafting (5.3) rather than a separate prompt file.
+4. **Nudge snooze.** `Nudge.dc.html` has "Remind me tomorrow". Add `nudge.snoozedUntil: Timestamp | null`; the hourly sweep skips orders whose snooze has not elapsed.
+5. **Processing is its own screen.** `Reading.dc.html` replaces this spec's inline "staged skeleton" with a dedicated route showing a ticking checklist. Better than what §6 described; adopt it.
+
+### Demo data
+
+The screens' numbers only reproduce if the seeded catalogue matches them. The seller is **Ola's Bakehouse**; the seeded catalogue is exactly these five products:
+
+| Product | Base | Variants | Notes |
+|---|---|---|---|
+| Lemon drizzle cake | £32.00 | 8 inch +£0, 10 inch +£10 | |
+| Red velvet cake | £36.00 | 8 inch +£0 | |
+| Brownie box | £14.00 | Box of 6 +£0, Box of 12 +£12 | |
+| Cinnamon buns | £12.00 | Box of 4 +£0 | |
+| Custom celebration cake | £55.00 | Vanilla +£0, Chocolate +£0, Red velvet +£4 | `depositMinor` £20.00 |
+
+Demo buyers across the screens are Jess M (`jess.mcr`), Ade O, Priya K and Tom H. The canonical demo order is Jess: lemon drizzle 10 inch (£42) plus brownie box of 6 (£14) = **£56.00**, collection Sat 10 Oct 2pm. Keep all of it as seed data, never hardcoded in widgets.
+
+### Screen distribution across the six plans
+
+| Plan | Screens |
+|---|---|
+| 1 — Foundations | none; design tokens as `ThemeData` + `ThemeExtension` |
+| 2 — Catalogue | `Snap`, `Review`, `Catalogue` (+ the shared components these need first) |
+| 3 — Share to order | `Reading`, `Draft`, `Reply` |
+| 4 — Orders | `Orders`, `Paid` (incl. the Sorted stamp animation) |
+| 5 — Agent and polish | `Nudge`, `Main`, `Setup`, `Connect`, `Settings` |
+| 6 — Ship | none |
+
+Per DESIGN.md, build the shared widgets (PrimaryButton, StatusChip, SelectableChip, SegmentedControl, WarningCard, OrderSlip, SortedStamp, MessageBubble, TabBar) as each plan's screens first need them, rather than speculatively up front.
