@@ -1,0 +1,27 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Sellers read their own tree. Every write goes through the backend's
+    // Admin SDK, which bypasses these rules entirely.
+    match /sellers/{sellerId} {
+      allow read: if request.auth != null && request.auth.uid == sellerId;
+      allow write: if false;
+
+      match /{document=**} {
+        allow read: if request.auth != null && request.auth.uid == sellerId;
+        allow write: if false;
+      }
+    }
+
+    // The webhook idempotency ledger is backend-only.
+    match /webhookEvents/{eventId} {
+      allow read, write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
